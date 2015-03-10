@@ -6,14 +6,9 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -24,11 +19,12 @@ public class Main extends JFrame {
 
 	private JPanel contentPane;
 	public static JLabel labelTime;
+	public static JLabel labelAverage;
 	public static List<Entry> entries;
 
 	public static void main(String[] args) {
 		entries = new ArrayList<Entry>();
-		for (String s : loadFile("session.db")) {
+		for (String s : FileUtils.loadFile("session.db")) {
 			entries.add(new Entry(s));
 		}
 		EventQueue.invokeLater(new Runnable() {
@@ -71,18 +67,55 @@ public class Main extends JFrame {
 			System.out.println(i + times(6 - (i + "").length(), ' ')
 					+ e.getCompact());
 		}
-		if (entries.size() > 0) {
-
-			int sum = 0;
-			for (Entry e : entries) {
-				sum += e.getTime();
-			}
-			double avg = sum / entries.size();
-			System.out.println("\nYour current average is "
-					+ toTimestamp((int) avg) + " (avg of " + entries.size()
-					+ ")");
+		if (entries.size() >= 12) {
+			int avg = aoN(12);
+			System.out.println("\nYour current ao12 is " + toTimestamp(avg)
+					+ ".");
+		} else if (entries.size() >= 5) {
+			int avg = aoN(5);
+			System.out.println("\nYour current ao5 is " + toTimestamp(avg)
+					+ ".");
 		}
-		saveFile("session.db", getEntryResources());
+		FileUtils.saveFile("session.db", getEntryResources());
+		labelAverage.setText(averageString());
+	}
+
+	public static String averageString() {
+		if (entries.size() >= 12) {
+			return "Ao12: " + toTimestamp(aoN(12));
+		} else if (entries.size() >= 5) {
+			return "Ao5: " + toTimestamp(aoN(5));
+		}
+		return "";
+	}
+
+	public static int aoN(int n) {
+		if (entries.size() < 3) {
+			return -1;
+		}
+		List<Entry> temp = new ArrayList<Entry>();
+		for (int i = 0; i < n; i++) {
+			temp.add(entries.get(entries.size() - i - 1));
+		}
+		Entry min = null;
+		Entry max = null;
+		for (int i = 0; i < temp.size(); i++) {
+			if (min == null || temp.get(i).getTime() < min.getTime()) {
+				min = temp.get(i);
+			}
+		}
+		for (int i = 0; i < temp.size(); i++) {
+			if (max == null || temp.get(i).getTime() > max.getTime()) {
+				max = temp.get(i);
+			}
+		}
+		temp.remove(max);
+		temp.remove(min);
+		int sum = 0;
+		for (Entry e : temp) {
+			sum += e.getTime();
+		}
+		return sum / temp.size();
 	}
 
 	public static List<String> getEntryResources() {
@@ -105,20 +138,19 @@ public class Main extends JFrame {
 							int rem = entries.size() - 1;
 							entries.remove(rem);
 							log();
+							Main.labelTime.setText("0.000");
 							System.out.println("   Removed last entry (#" + rem
 									+ ")");
 						}
 					} else if (arg0.getKeyCode() == KeyEvent.VK_N) {
-						saveFile(System.currentTimeMillis() + ".db",
+						FileUtils.saveFile(System.currentTimeMillis() + ".db",
 								getEntryResources());
-						File f = new File(root + "session.db");
+						File f = new File(FileUtils.root + "session.db");
 						if (f.exists())
 							f.delete();
 						entries = new ArrayList<Entry>();
-						for (String s : loadFile("session.db")) {
-							entries.add(new Entry(s));
-						}
-						saveFile(root + "session.db", getEntryResources());
+						FileUtils.saveFile(FileUtils.root + "session.db",
+								getEntryResources());
 						log();
 						Main.labelTime.setText("0.000");
 						System.out.println("Session cleared!");
@@ -143,60 +175,19 @@ public class Main extends JFrame {
 		labelTime.setHorizontalAlignment(SwingConstants.CENTER);
 		// labelTime.setHorizontalAlignment(SwingConstants.CENTER);
 		labelTime.setFocusable(false);
-		labelTime.setFont(new Font("Courier New", Font.PLAIN, 128));
+		labelTime.setFont(new Font("Courier New", Font.PLAIN, 160));
+		labelAverage = new JLabel(averageString());
+		labelAverage.setBounds(5, 5, 200, 25);
+		labelAverage.setFocusable(false);
+		labelAverage.setFont(new Font("Courier New", Font.PLAIN, 20));
 
 		contentPane = new JPanel();
-		contentPane.setBackground(new Color(244, 164, 96));
+		contentPane.setBackground(new Color(190, 255, 130));
 		contentPane.setLayout(null);
 
 		contentPane.add(labelTime);
+		contentPane.add(labelAverage);
 		setContentPane(contentPane);
-	}
-
-	public final static String root = System.getenv("APPDATA") + "/CTL/";
-
-	public static List<String> loadFile(String subpath) {
-		List<String> lines = new ArrayList<String>();
-		File f = new File(root + subpath);
-		if (f.exists()) {
-			try {
-				BufferedReader br = new BufferedReader(new FileReader(f));
-				String line;
-				while ((line = br.readLine()) != null) {
-					lines.add(line);
-				}
-				br.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				System.out.println("Error loading file: \"" + e.getMessage()
-						+ "\"");
-			}
-
-		} else {
-			System.out.println("File \"" + subpath + "\" could not be found.");
-		}
-		return lines;
-	}
-
-	public static boolean saveFile(String subpath, List<String> lines) {
-		File f = new File(root + subpath);
-		f.mkdirs();
-		if (f.exists()) {
-			f.delete();
-		}
-		try {
-			FileWriter writer;
-			writer = new FileWriter(f);
-			for (String s : lines) {
-				writer.write(s + "\n");
-			}
-			writer.close();
-			return true;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Error saving file: \"" + e.getMessage() + "\"");
-			return false;
-		}
 	}
 
 	public static String toTimestamp(int i) {
