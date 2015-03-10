@@ -9,6 +9,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimerTask;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -20,6 +21,7 @@ public class Main extends JFrame {
 	private JPanel contentPane;
 	public static JLabel labelTime;
 	public static JLabel labelAverage;
+	public static JLabel labelResponse;
 	public static List<Entry> entries;
 
 	public static void main(String[] args) {
@@ -37,7 +39,7 @@ public class Main extends JFrame {
 				}
 			}
 		});
-		log();
+
 	}
 
 	// stopped, keydown, counts
@@ -118,6 +120,45 @@ public class Main extends JFrame {
 		return sum / temp.size();
 	}
 
+	public static int bestAoN(int n) {
+		if (entries.size() < n) {
+			return -1;
+		}
+		int minavg = 0;
+		for (int j = 0; j < (entries.size() + 1 - n); j++) {
+			if (entries.size() < 3) {
+				return -1;
+			}
+			List<Entry> temp = new ArrayList<Entry>();
+			iter: for (int i = j; i < j + n; i++) {
+				temp.add(entries.get(entries.size() - i - 1));
+			}
+			Entry min = null;
+			Entry max = null;
+			searchmin: for (int i = 0; i < temp.size(); i++) {
+				if (min == null || temp.get(i).getTime() < min.getTime()) {
+					min = temp.get(i);
+				}
+			}
+			searchmax: for (int i = 0; i < temp.size(); i++) {
+				if (max == null || temp.get(i).getTime() > max.getTime()) {
+					max = temp.get(i);
+				}
+			}
+			temp.remove(max);
+			temp.remove(min);
+			int sum = 0;
+			for (Entry e : temp) {
+				sum += e.getTime();
+			}
+			int avg = sum / temp.size();
+			if (minavg == 0 || avg < minavg) {
+				minavg = avg;
+			}
+		}
+		return minavg;
+	}
+
 	public static List<String> getEntryResources() {
 		List<String> l = new ArrayList<String>();
 		for (Entry e : entries) {
@@ -141,6 +182,7 @@ public class Main extends JFrame {
 							Main.labelTime.setText("0.000");
 							System.out.println("   Removed last entry (#" + rem
 									+ ")");
+							broadcast("Last time deleted");
 						}
 					} else if (arg0.getKeyCode() == KeyEvent.VK_N) {
 						FileUtils.saveFile(System.currentTimeMillis() + ".db",
@@ -154,6 +196,19 @@ public class Main extends JFrame {
 						log();
 						Main.labelTime.setText("0.000");
 						System.out.println("Session cleared!");
+						broadcast("New session created");
+					} else if (arg0.getKeyCode() == KeyEvent.VK_B) {
+						int n = 0;
+						if (entries.size() >= 12) {
+							n = 12;
+						} else if (entries.size() >= 5) {
+							n = 5;
+						}
+						if (n != 0) {
+							broadcast("Best Ao" + n + ": "
+									+ toTimestamp(bestAoN(n)) + "      (" + entries.size() + " entries)", 5000);
+						}
+
 					}
 				} else {
 					Timer.stop();
@@ -167,19 +222,27 @@ public class Main extends JFrame {
 		setName("Cubetimer light");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+		int scrWidth = (int) java.awt.Toolkit.getDefaultToolkit()
+				.getScreenSize().getWidth();
+		int scrHeight = (int) java.awt.Toolkit.getDefaultToolkit()
+				.getScreenSize().getHeight();
+
 		labelTime = new JLabel(toTimestamp(0));
-		labelTime.setBounds(0, 0, (int) java.awt.Toolkit.getDefaultToolkit()
-				.getScreenSize().getWidth(), (int) java.awt.Toolkit
-				.getDefaultToolkit().getScreenSize().getHeight());
-		labelTime.setHorizontalTextPosition(SwingConstants.CENTER);
+		labelTime.setBounds(0, 0, scrWidth, scrHeight);
+		// labelTime.setHorizontalTextPosition(SwingConstants.CENTER);
 		labelTime.setHorizontalAlignment(SwingConstants.CENTER);
-		// labelTime.setHorizontalAlignment(SwingConstants.CENTER);
 		labelTime.setFocusable(false);
 		labelTime.setFont(new Font("Courier New", Font.PLAIN, 160));
 		labelAverage = new JLabel(averageString());
 		labelAverage.setBounds(5, 5, 200, 25);
 		labelAverage.setFocusable(false);
-		labelAverage.setFont(new Font("Courier New", Font.PLAIN, 20));
+		labelAverage.setFont(new Font("Courier New", Font.PLAIN, 28));
+
+		labelResponse = new JLabel("");
+		labelResponse.setBounds(0, 10, scrWidth, 60);
+		labelResponse.setFocusable(false);
+		labelResponse.setFont(new Font("Courier New", Font.PLAIN, 52));
+		labelResponse.setHorizontalAlignment(SwingConstants.CENTER);
 
 		contentPane = new JPanel();
 		contentPane.setBackground(new Color(190, 255, 130));
@@ -187,7 +250,9 @@ public class Main extends JFrame {
 
 		contentPane.add(labelTime);
 		contentPane.add(labelAverage);
+		contentPane.add(labelResponse);
 		setContentPane(contentPane);
+		log();
 	}
 
 	public static String toTimestamp(int i) {
@@ -210,4 +275,23 @@ public class Main extends JFrame {
 		return (out);
 	}
 
+	public static void broadcast(String out) {
+		labelResponse.setText(out);
+		new java.util.Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				labelResponse.setText("");
+			}
+		}, 2000);
+	}
+
+	public static void broadcast(String out, int time) {
+		labelResponse.setText(out);
+		new java.util.Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				labelResponse.setText("");
+			}
+		}, time);
+	}
 }
