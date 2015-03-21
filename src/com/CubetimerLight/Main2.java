@@ -34,15 +34,6 @@ public class Main2 extends JFrame {
 	public static void main(String[] args) {
 		loadEntries();
 		new Main2();
-		// EventQueue.invokeLater(new Runnable() {
-		// public void run() {
-		// try {
-		// Main2 frame = new Main2();
-		// } catch (Exception e) {
-		// e.printStackTrace();
-		// }
-		// }
-		// });
 	}
 
 	public Main2() {
@@ -53,9 +44,7 @@ public class Main2 extends JFrame {
 		setVisible(true);
 
 		contentPane = new JPanel();
-		contentPane.setBackground(new Color(190, 255, 130));
-		contentPane.setLayout(null);
-
+		//contentPane.setBackground(new Color(190, 255, 130));
 		setContentPane(contentPane);
 		for (int i = 0; i < labels.length; i++) {
 			String time = "";
@@ -65,28 +54,28 @@ public class Main2 extends JFrame {
 					time = "NaN";
 					break;
 				}
-				time = toTimestamp(aoN(5));
+				time = toTimestamp(SortUtils.aoN(entries, 5));
 				break;
 			case 1:
 				if (entries.size() < 12) {
 					time = "NaN";
 					break;
 				}
-				time = toTimestamp(aoN(12));
+				time = toTimestamp(SortUtils.aoN(entries, 12));
 				break;
 			case 2:
 				if (entries.size() < 100) {
 					time = "NaN";
 					break;
 				}
-				time = toTimestamp(aoN(5));
+				time = toTimestamp(SortUtils.aoN(entries, 5));
 				break;
 			case 3:
-				if (entries.size()<1) {
+				if (entries.size() < 1) {
 					time = "NaN";
 					break;
 				}
-				time = toTimestamp(median());
+				time = toTimestamp(SortUtils.median(entries));
 				break;
 			}
 			labels[i] = new JLabel(strings[i] + "  " + time);
@@ -101,48 +90,6 @@ public class Main2 extends JFrame {
 			contentPane.add(labels[i]);
 		}
 
-	}
-
-	public static int median() {
-		if (entries.size() == 0)
-			return -1;
-		List<Integer> temp = new ArrayList<Integer>();
-		for (Entry e : entries) {
-			temp.add(e.getTime());
-		}
-		Collections.sort(temp);
-		double d = temp.size();
-		int median = (temp.get((int) Math.ceil(d / 2)) - 1);
-		return median;
-	}
-	
-	public static int aoN(int n) {
-		if (entries.size() < 3) {
-			return -1;
-		}
-		List<Entry> temp = new ArrayList<Entry>();
-		for (int i = 0; i < n; i++) {
-			temp.add(entries.get(entries.size() - i - 1));
-		}
-		Entry min = null;
-		Entry max = null;
-		for (int i = 0; i < temp.size(); i++) {
-			if (min == null || temp.get(i).getTime() < min.getTime()) {
-				min = temp.get(i);
-			}
-		}
-		for (int i = 0; i < temp.size(); i++) {
-			if (max == null || temp.get(i).getTime() > max.getTime()) {
-				max = temp.get(i);
-			}
-		}
-		temp.remove(max);
-		temp.remove(min);
-		int sum = 0;
-		for (Entry e : temp) {
-			sum += e.getTime();
-		}
-		return sum / temp.size();
 	}
 
 	public static String toTimestamp(int i) {
