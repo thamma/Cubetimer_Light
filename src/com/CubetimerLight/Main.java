@@ -8,6 +8,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TimerTask;
 
@@ -25,34 +26,24 @@ public class Main extends JFrame {
 	public static List<Entry> entries;
 
 	public static void main(String[] args) {
-		entries = new ArrayList<Entry>();
-		for (String s : FileUtils.loadFile("session.db")) {
-			entries.add(new Entry(s));
-		}
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					Main frame = new Main();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-
+		String[] lines = new String[] { "Dominic", "Zimmer" };
+		String[] lines2 = new String[] { "Corinnalein", "Heimann" };
+		lines = Main.table(2, lines, lines2);
+		System.out.println(lines[0]);
+		System.out.println(lines[1]);
+		return;
+		/*
+		 * entries = new ArrayList<Entry>(); for (String s :
+		 * FileUtils.loadFile("session.db")) { entries.add(new Entry(s)); }
+		 * EventQueue.invokeLater(new Runnable() { public void run() { try {
+		 * Main frame = new Main(); frame.setVisible(true); } catch (Exception
+		 * e) { e.printStackTrace(); } } });
+		 */
 	}
 
 	// stopped, keydown, counts
 	// stopped, keyup , counts > x, timer start
 	// started, keydown any, timer stops
-
-	public static String times(int i, char c) {
-		String out = "";
-		for (int j = 0; j < i; j++) {
-			out += c;
-		}
-		return out;
-	}
 
 	public static void purge() {
 		for (int i = 0; i < 50; i++) {
@@ -79,7 +70,7 @@ public class Main extends JFrame {
 					+ ".");
 		}
 		FileUtils.saveFile("session.db", getEntryResources());
-		labelAverage.setText(averageString());
+		labelAverage.setText(medianString());
 	}
 
 	public static String averageString() {
@@ -89,6 +80,19 @@ public class Main extends JFrame {
 			return "Ao5: " + toTimestamp(aoN(5));
 		}
 		return "";
+	}
+
+	public static String medianString() {
+		if (entries.size() == 0)
+			return "";
+		List<Integer> temp = new ArrayList<Integer>();
+		for (Entry e : entries) {
+			temp.add(e.getTime());
+		}
+		Collections.sort(temp);
+		double d = temp.size();
+		int median = (temp.get((int) Math.ceil(d / 2)) - 1);
+		return "Median (of " + temp.size() + "): " + toTimestamp(median);
 	}
 
 	public static int aoN(int n) {
@@ -206,7 +210,8 @@ public class Main extends JFrame {
 						}
 						if (n != 0) {
 							broadcast("Best Ao" + n + ": "
-									+ toTimestamp(bestAoN(n)) + "      (" + entries.size() + " entries)", 5000);
+									+ toTimestamp(bestAoN(n)) + "      ("
+									+ entries.size() + " entries)", 5000);
 						}
 
 					}
@@ -232,16 +237,16 @@ public class Main extends JFrame {
 		// labelTime.setHorizontalTextPosition(SwingConstants.CENTER);
 		labelTime.setHorizontalAlignment(SwingConstants.CENTER);
 		labelTime.setFocusable(false);
-		labelTime.setFont(new Font("Courier New", Font.PLAIN, 160));
+		labelTime.setFont(new Font("Courier New", Font.PLAIN, 142));
 		labelAverage = new JLabel(averageString());
-		labelAverage.setBounds(5, 5, 200, 25);
+		labelAverage.setBounds(5, 5, 500, 25);
 		labelAverage.setFocusable(false);
-		labelAverage.setFont(new Font("Courier New", Font.PLAIN, 28));
+		labelAverage.setFont(new Font("Courier New", Font.PLAIN, 22));
 
 		labelResponse = new JLabel("");
 		labelResponse.setBounds(0, 10, scrWidth, 60);
 		labelResponse.setFocusable(false);
-		labelResponse.setFont(new Font("Courier New", Font.PLAIN, 52));
+		labelResponse.setFont(new Font("Courier New", Font.PLAIN, 36));
 		labelResponse.setHorizontalAlignment(SwingConstants.CENTER);
 
 		contentPane = new JPanel();
@@ -275,6 +280,37 @@ public class Main extends JFrame {
 		return (out);
 	}
 
+	public static String[] table(int min, String[]... lines) {
+		String[] out = new String[lines.length];
+		int[] max = getMaxLenghts(lines);
+		for (int j = 0; j < lines.length; j++) {
+			String[] s = lines[j];
+			for (int i = 0; i < s.length; i++) {
+				String t = s[i];
+				System.out.println(s[i]);
+				if (s[i].length() < max[i]) {
+					s[i] += times(max[i] + min - s[i].length(), ' ');
+				}
+				if (out[j]==null) {
+					out[j] = "";
+				}
+				out[j] = out[j] + s[i];
+			}
+		}
+		return out;
+	}
+
+	public static int[] getMaxLenghts(String[][] in) {
+		int[] out = new int[in.length];
+		for (int i = 0; i < in.length; i++) {
+			for (int j = 0; j < in[i].length; j++) {
+				if (out[j] == 0 || in[i][j].length() > out[j])
+					out[j] = in[i][j].length();
+			}
+		}
+		return out;
+	}
+
 	public static void broadcast(String out) {
 		labelResponse.setText(out);
 		new java.util.Timer().schedule(new TimerTask() {
@@ -293,5 +329,18 @@ public class Main extends JFrame {
 				labelResponse.setText("");
 			}
 		}, time);
+	}
+
+	public static String times(int n, char c) {
+		return times(n, "" + c);
+	}
+
+	public static String times(int n, String c) {
+		String out = "";
+		for (int i = 0; i < n; i++) {
+			out = out + c;
+			// out += c;
+		}
+		return out;
 	}
 }
