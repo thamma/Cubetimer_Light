@@ -26,7 +26,6 @@ public class Timer {
 			timer.purge();
 			started = false;
 			int time = time();
-			Main.entries.add(new Entry(time, "no scramble"));
 			return time;
 		} else {
 			return time();
@@ -51,7 +50,7 @@ public class Timer {
 	}
 
 	private static void setLabelTime() {
-		Main.labelTime.setText(Main.toTimestamp(time()));
+		Main2.timeLabel.setText(Main2.toTimestamp(time()));
 	}
 
 }

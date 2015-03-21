@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class SortUtils {
+
 	public static int bestAoN(List<Entry> entries, int n) {
 		if (entries.size() < n) {
 			return -1;
@@ -44,6 +45,26 @@ public class SortUtils {
 		return minavg;
 	}
 
+	public static int best(List<Entry> entries) {
+		if (entries.size() == 0)
+			return -1;
+		int min = -1;
+		for (Entry e : entries) {
+			if (min == -1 || e.getTime() < min) {
+				min = e.getTime();
+			}
+		}
+		return min;
+	}
+
+	public static List<String> getEntryResources(List<Entry> entries) {
+		List<String> l = new ArrayList<String>();
+		for (Entry e : entries) {
+			l.add(e.getResource());
+		}
+		return l;
+	}
+
 	public static int median(List<Entry> entries) {
 		if (entries.size() == 0)
 			return -1;
@@ -58,7 +79,7 @@ public class SortUtils {
 	}
 
 	public static int aoN(List<Entry> entries, int n) {
-		if (entries.size() < 3) {
+		if (entries.size() < 3 || entries.size() < n) {
 			return -1;
 		}
 		List<Entry> temp = new ArrayList<Entry>();
@@ -85,12 +106,13 @@ public class SortUtils {
 		}
 		return sum / temp.size();
 	}
-	
-	public static int mean (List<Entry> entries) {
-		if (entries.size()==0) return -1;
+
+	public static int mean(List<Entry> entries) {
+		if (entries.size() == 0)
+			return -1;
 		int sum = 0;
-		for (Entry e: entries) 
+		for (Entry e : entries)
 			sum += e.getTime();
-		return sum/entries.size();
+		return sum / entries.size();
 	}
 }

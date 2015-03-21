@@ -3,9 +3,13 @@ package com.CubetimerLight;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -16,22 +20,24 @@ public class Main2 extends JFrame {
 
 	final int SCRWIDTH = (int) java.awt.Toolkit.getDefaultToolkit()
 			.getScreenSize().getWidth();
-	int SCRHEIGHT = (int) java.awt.Toolkit.getDefaultToolkit().getScreenSize()
-			.getHeight();
+	final int SCRHEIGHT = (int) java.awt.Toolkit.getDefaultToolkit()
+			.getScreenSize().getHeight();
+	final int DOWNCAP = 4;
 
 	private static List<Entry> entries;
 	private JPanel contentPane;
+	public static JLabel timeLabel;
+	public static JLabel scrambleLabel;
+	private static JLabel[] labels = new JLabel[4];
+	static int downtime;
+	
+//	[S] new Session
+//  [N] new Scramble
+//  [DEL] delete last entry ? 
 
-	private String[] strings = new String[] { "Ao5:   ", "Ao12:  ", "Ao100: ",
-			"Median:" };
-	private JLabel[] labels = new JLabel[strings.length];
-	private Double[][] labelSizes = new Double[][] {
-			new Double[] { 0.01, 0.0, 0.5, 0.05 },
-			new Double[] { 0.01, 0.05, 0.5, 0.05 },
-			new Double[] { 0.01, 0.10, 0.5, 0.05 },
-			new Double[] { 0.01, 0.15, 0.5, 0.05 } };
-
+	
 	public static void main(String[] args) {
+		downtime = 0;
 		loadEntries();
 		new Main2();
 	}
@@ -42,58 +48,180 @@ public class Main2 extends JFrame {
 		setName("Cubetimer light");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
-
 		contentPane = new JPanel();
-		//contentPane.setBackground(new Color(190, 255, 130));
-		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		contentPane.setBackground(new Color(190, 255, 130));
 		for (int i = 0; i < labels.length; i++) {
-			String time = "";
-			switch (i) {
-			case 0:
-				if (entries.size() < 5) {
-					time = "NaN";
-					break;
-				}
-				time = toTimestamp(SortUtils.aoN(entries, 5));
-				break;
-			case 1:
-				if (entries.size() < 12) {
-					time = "NaN";
-					break;
-				}
-				time = toTimestamp(SortUtils.aoN(entries, 12));
-				break;
-			case 2:
-				if (entries.size() < 100) {
-					time = "NaN";
-					break;
-				}
-				time = toTimestamp(SortUtils.aoN(entries, 5));
-				break;
-			case 3:
-				if (entries.size() < 1) {
-					time = "NaN";
-					break;
-				}
-				time = toTimestamp(SortUtils.median(entries));
-				break;
-			}
-			labels[i] = new JLabel(strings[i] + "  " + time);
+			labels[i] = new JLabel("");
+			labels[i].setBounds(20, 30 * i + 20, 750, 20);
 			labels[i].setFocusable(false);
-			labels[i].setFont(new Font("Courier", Font.PLAIN, 24));
+			labels[i].setFont(new Font("Courier", Font.PLAIN, 18));
 			labels[i].setHorizontalAlignment(SwingConstants.LEFT);
 			labels[i].setVerticalAlignment(SwingConstants.TOP);
-			labels[i].setBounds((int) (labelSizes[i][0] * SCRWIDTH),
-					(int) (labelSizes[i][1] * SCRHEIGHT),
-					(int) (labelSizes[i][2] * SCRWIDTH),
-					(int) (labelSizes[i][3] * SCRHEIGHT));
 			contentPane.add(labels[i]);
 		}
+		timeLabel = new JLabel(toTimestamp(0));
+		timeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		timeLabel.setVerticalAlignment(SwingConstants.CENTER);
+		timeLabel.setBounds(0, 0, SCRWIDTH, SCRHEIGHT);
+		timeLabel.setFont(new Font("Courier", Font.PLAIN, 120));
+		contentPane.add(timeLabel);
+
+		scrambleLabel = new JLabel("");
+		scrambleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		scrambleLabel.setVerticalAlignment(SwingConstants.CENTER);
+		scrambleLabel.setBounds(0, SCRHEIGHT / 2, SCRWIDTH, SCRHEIGHT / 4);
+		scrambleLabel.setFont(new Font("Courier", Font.PLAIN, 24));
+		contentPane.add(scrambleLabel);
+
+		setContentPane(contentPane);
+		updateStrings();
+		updateScramble();
+		addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent arg0) {
+				if (!Timer.started()) {
+					if (arg0.getKeyCode() == KeyEvent.VK_SPACE) {
+						if (downtime < DOWNCAP) {
+							timeLabel.setForeground(new Color(255, 25, 25));
+							downtime++;
+						} else if (downtime == DOWNCAP) {
+							timeLabel.setForeground(new Color(75, 75, 255));
+						}
+					}
+				} else {
+					downtime++;
+					Timer.stop();
+					entries.add(new Entry(Timer.time(), scrambleLabel.getText()));
+					saveEntries();
+					updateStrings();
+					updateScramble();
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+				if (arg0.getKeyCode() == KeyEvent.VK_SPACE) {
+					if (downtime < DOWNCAP) {
+						timeLabel.setForeground(new Color(0, 0, 0));
+						downtime = 0;
+					} else if (downtime == DOWNCAP) {
+						Timer.start();
+						timeLabel.setForeground(new Color(0, 0, 0));
+					} else if (downtime > DOWNCAP) {
+						downtime = 0;
+					}
+				}
+			}
+		});
 
 	}
 
-	public static String toTimestamp(int i) {
+	public static void updateStrings() {
+		String[] lines0 = tableToLines(
+				3,
+				new String[][] {
+						new String[] { "Ao5",
+								toTimestamp(SortUtils.aoN(entries, 5)) },
+						new String[] { "Ao12",
+								toTimestamp(SortUtils.aoN(entries, 12)) },
+						new String[] { "Ao100",
+								toTimestamp(SortUtils.aoN(entries, 100)) } });
+		String[] lines1 = tableToLines(
+				3,
+				new String[][] {
+						new String[] { "Best Ao5:",
+								toTimestamp(SortUtils.bestAoN(entries, 12)) },
+						new String[] { "Best Ao12:",
+								toTimestamp(SortUtils.bestAoN(entries, 12)) },
+						new String[] { "Best:",
+								toTimestamp(SortUtils.best(entries)) }
 
+				});
+		String[] lines2 = tableToLines(3, new String[][] {
+				new String[] { "Mean:", toTimestamp(SortUtils.mean(entries)) },
+				new String[] { "Median:",
+						toTimestamp(SortUtils.median(entries)) },
+				new String[] { "Solves:", "" + entries.size() } });
+		for (int i = 0; i < lines0.length; i++) {
+			labels[i]
+					.setText(lines0[i] + "   " + lines1[i] + "   " + lines2[i]);
+		}
+	}
+
+	public static void updateScramble() {
+		String scramblechars = "";
+		Random r = new Random();
+		String res0 = "UFLDBR";
+		String res1 = "2'";
+		while (scramblechars.length() < 17) {
+			int cid = r.nextInt(6);
+			if (scramblechars.length() > 0) {
+				while (scramblechars.charAt(scramblechars.length() - 1) == res0
+						.charAt(cid))
+					cid = r.nextInt(6);
+			}
+			if (scramblechars.length() > 1) {
+				while (scramblechars.charAt(scramblechars.length() - 1) == res0
+						.charAt(cid)
+						|| scramblechars.charAt(scramblechars.length() - 2) == res0
+								.charAt((cid + 3) % 6)
+						|| (scramblechars.charAt(scramblechars.length() - 2) == res0
+								.charAt(cid) && scramblechars
+								.charAt(scramblechars.length() - 1) == res0
+								.charAt((cid + 3) % 6))) {
+					cid = r.nextInt(6);
+				}
+			}
+			scramblechars += res0.charAt(cid);
+		}
+		String scramble = "";
+		for (int i = 0; i < scramblechars.length(); i++) {
+			char c = scramblechars.charAt(i);
+			int a = r.nextInt(4);
+			scramble += c + (a > 1 ? "" : "" + res1.charAt(a)) + " ";
+		}
+		scrambleLabel.setText(scramble);
+	}
+
+	public static String[] tableToLines(int min, String[][] lines) {
+		int maxcols = 0;
+		for (int i = 0; i < lines.length; i++) {
+			if (maxcols < lines[i].length)
+				maxcols = lines[i].length;
+		}
+		int[] maxcollength = new int[maxcols];
+		for (int i = 0; i < lines.length; i++) {
+			for (int j = 0; j < lines[i].length; j++) {
+				if (maxcollength[j] < lines[i][j].length()) {
+					maxcollength[j] = lines[i][j].length();
+				}
+			}
+		}
+		for (int i = 0; i < lines.length; i++) {
+			for (int j = 0; j < lines[i].length; j++) {
+				while (lines[i][j].length() < maxcollength[j]) {
+					lines[i][j] = lines[i][j] + " ";
+				}
+			}
+		}
+		String[] out = new String[lines.length];
+		String s = "";
+		while (s.length() < min)
+			s += " ";
+		for (int i = 0; i < lines.length; i++) {
+			for (int j = 0; j < lines[i].length; j++) {
+				if (out[i] == null)
+					out[i] = "";
+				out[i] = out[i] + lines[i][j] + s;
+			}
+		}
+		return out;
+	}
+
+	public static String toTimestamp(int i) {
+		if (i == -1)
+			return "NaN";
 		int min = 0; // minutes
 		while (i >= 60000) {
 			i -= 60000; // i = i - 60000;
@@ -105,7 +233,7 @@ public class Main2 extends JFrame {
 				sec = "0" + sec;
 		String millis = "" + i % 1000;
 		while (millis.length() < 3)
-			millis += "0";
+			millis = "0" + millis;
 		String out = ((min != 0) ? (min + ":") : ("")) + sec + "." + millis;
 		// <condition>?<true case>:<false case>
 
@@ -114,6 +242,14 @@ public class Main2 extends JFrame {
 
 	private static void loadEntries() {
 		loadEntries("session.db");
+	}
+
+	private static void saveEntries() {
+		saveEntries("session.db");
+	}
+
+	private static void saveEntries(String sessionname) {
+		FileUtils.saveFile(sessionname, SortUtils.getEntryResources(entries));
 	}
 
 	private static void loadEntries(String sessionname) {

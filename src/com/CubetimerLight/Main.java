@@ -26,19 +26,22 @@ public class Main extends JFrame {
 	public static List<Entry> entries;
 
 	public static void main(String[] args) {
-		String[] lines = new String[] { "Dominic", "Zimmer" };
-		String[] lines2 = new String[] { "Corinnalein", "Heimann" };
-		lines = Main.table(2, lines, lines2);
-		System.out.println(lines[0]);
-		System.out.println(lines[1]);
-		return;
-		/*
-		 * entries = new ArrayList<Entry>(); for (String s :
-		 * FileUtils.loadFile("session.db")) { entries.add(new Entry(s)); }
-		 * EventQueue.invokeLater(new Runnable() { public void run() { try {
-		 * Main frame = new Main(); frame.setVisible(true); } catch (Exception
-		 * e) { e.printStackTrace(); } } });
-		 */
+
+		entries = new ArrayList<Entry>();
+		for (String s : FileUtils.loadFile("session.db")) {
+			entries.add(new Entry(s));
+		}
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					Main frame = new Main();
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
 	}
 
 	// stopped, keydown, counts
@@ -69,7 +72,7 @@ public class Main extends JFrame {
 			System.out.println("\nYour current ao5 is " + toTimestamp(avg)
 					+ ".");
 		}
-		FileUtils.saveFile("session.db", getEntryResources());
+		FileUtils.saveFile("session.db", SortUtils.getEntryResources(entries));
 		labelAverage.setText(medianString());
 	}
 
@@ -163,14 +166,6 @@ public class Main extends JFrame {
 		return minavg;
 	}
 
-	public static List<String> getEntryResources() {
-		List<String> l = new ArrayList<String>();
-		for (Entry e : entries) {
-			l.add(e.getResource());
-		}
-		return l;
-	}
-
 	public Main() {
 		addKeyListener(new KeyAdapter() {
 			@Override
@@ -190,13 +185,13 @@ public class Main extends JFrame {
 						}
 					} else if (arg0.getKeyCode() == KeyEvent.VK_N) {
 						FileUtils.saveFile(System.currentTimeMillis() + ".db",
-								getEntryResources());
+								SortUtils.getEntryResources(entries));
 						File f = new File(FileUtils.root + "session.db");
 						if (f.exists())
 							f.delete();
 						entries = new ArrayList<Entry>();
 						FileUtils.saveFile(FileUtils.root + "session.db",
-								getEntryResources());
+								SortUtils.getEntryResources(entries));
 						log();
 						Main.labelTime.setText("0.000");
 						System.out.println("Session cleared!");
@@ -291,7 +286,7 @@ public class Main extends JFrame {
 				if (s[i].length() < max[i]) {
 					s[i] += times(max[i] + min - s[i].length(), ' ');
 				}
-				if (out[j]==null) {
+				if (out[j] == null) {
 					out[j] = "";
 				}
 				out[j] = out[j] + s[i];
