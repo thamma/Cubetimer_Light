@@ -73,8 +73,8 @@ public class SortUtils {
 			temp.add(e.getTime());
 		}
 		Collections.sort(temp);
-		double d = temp.size();
-		int median = (temp.get((int) Math.ceil(d / 2)) - 1);
+		int d = temp.size();
+		int median = temp.get(d/2 );
 		return median;
 	}
 

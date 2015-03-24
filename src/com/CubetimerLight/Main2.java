@@ -14,6 +14,7 @@ import java.util.Random;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 
 public class Main2 extends JFrame {
@@ -22,7 +23,6 @@ public class Main2 extends JFrame {
 			.getScreenSize().getWidth();
 	final int SCRHEIGHT = (int) java.awt.Toolkit.getDefaultToolkit()
 			.getScreenSize().getHeight();
-	final int DOWNCAP = 4;
 
 	private static List<Entry> entries;
 	private JPanel contentPane;
@@ -30,12 +30,18 @@ public class Main2 extends JFrame {
 	public static JLabel scrambleLabel;
 	private static JLabel[] labels = new JLabel[4];
 	static int downtime;
-	
-//	[S] new Session
-//  [N] new Scramble
-//  [DEL] delete last entry ? 
 
+	private static JProgressBar xp;
+	private static JLabel levelLabel;
+	private static JLabel xpLabel;
 	
+	private static Quest suggested;
+	private static Quest active;
+
+	// [S] new Session
+	// [N] new Scramble
+	// [DEL] delete last entry?
+
 	public static void main(String[] args) {
 		downtime = 0;
 		loadEntries();
@@ -74,20 +80,42 @@ public class Main2 extends JFrame {
 		scrambleLabel.setFont(new Font("Courier", Font.PLAIN, 24));
 		contentPane.add(scrambleLabel);
 
+		levelLabel = new JLabel("Lv " + 1);
+		levelLabel.setFont(new Font("Courier", Font.BOLD, 22));
+		xpLabel = new JLabel("42/69 Exp.");
+		xpLabel.setFont(new Font("Courier", Font.PLAIN, 12));
+		xp = new JProgressBar(0, 100);
+		{
+			int marg = 20;
+			int h = 40;
+			int w = 75;
+			xp.setBounds(2 * marg + w, SCRHEIGHT - (h + marg), SCRWIDTH
+					- (w + 3 * marg), h);
+			levelLabel.setBounds(marg, SCRHEIGHT - (h + marg), w, h - 20);
+			xpLabel.setBounds(marg, SCRHEIGHT - (h + marg), w, h + 20);
+		}
+		xp.setValue(45);
+		contentPane.add(xp);
+		contentPane.add(levelLabel);
+		contentPane.add(xpLabel);
+
 		setContentPane(contentPane);
 		updateStrings();
 		updateScramble();
+		updateXp();
 		addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent arg0) {
 				if (!Timer.started()) {
 					if (arg0.getKeyCode() == KeyEvent.VK_SPACE) {
-						if (downtime < DOWNCAP) {
+						if (downtime < Constants.DOWNCAP) {// notready
 							timeLabel.setForeground(new Color(255, 25, 25));
 							downtime++;
-						} else if (downtime == DOWNCAP) {
+						} else if (downtime == Constants.DOWNCAP) {// ready
 							timeLabel.setForeground(new Color(75, 75, 255));
 						}
+					} else if (arg0.getKeyCode() == KeyEvent.VK_N) {
+						updateScramble();
 					}
 				} else {
 					downtime++;
@@ -96,25 +124,36 @@ public class Main2 extends JFrame {
 					saveEntries();
 					updateStrings();
 					updateScramble();
+					Progress.addXp(evalSolve(Timer.time()));
+					updateXp();
 				}
 			}
 
 			@Override
 			public void keyReleased(KeyEvent arg0) {
 				if (arg0.getKeyCode() == KeyEvent.VK_SPACE) {
-					if (downtime < DOWNCAP) {
+					if (downtime < Constants.DOWNCAP) {// forget it
 						timeLabel.setForeground(new Color(0, 0, 0));
 						downtime = 0;
-					} else if (downtime == DOWNCAP) {
+					} else if (downtime == Constants.DOWNCAP) {// ready, go!
 						Timer.start();
 						timeLabel.setForeground(new Color(0, 0, 0));
-					} else if (downtime > DOWNCAP) {
-						downtime = 0;
 					}
+				}
+				if (downtime > Constants.DOWNCAP) {
+					downtime = 0;
 				}
 			}
 		});
+	}
 
+	private static int evalSolve(int time) {
+		Random r = new Random();
+		if (entries.size() > 10 && time == SortUtils.best(entries))
+			return 1 + r.nextInt(Constants.TIME_PB);
+		if (time < SortUtils.median(entries))
+			return 1 + r.nextInt(Constants.TIME_GOOD);
+		return Constants.TIME_NORMAL;
 	}
 
 	public static void updateStrings() {
@@ -131,7 +170,7 @@ public class Main2 extends JFrame {
 				3,
 				new String[][] {
 						new String[] { "Best Ao5:",
-								toTimestamp(SortUtils.bestAoN(entries, 12)) },
+								toTimestamp(SortUtils.bestAoN(entries, 5)) },
 						new String[] { "Best Ao12:",
 								toTimestamp(SortUtils.bestAoN(entries, 12)) },
 						new String[] { "Best:",
@@ -149,12 +188,21 @@ public class Main2 extends JFrame {
 		}
 	}
 
+	public static void updateXp() {
+		int level = Progress.getLevel();
+		levelLabel.setText("Lv " + level);
+		xpLabel.setText(Progress.getXp() + "/"
+				+ Progress.xpAt(Progress.getLevel()) + " exp.");
+		xp.setMaximum(Progress.xpAt(level));
+		xp.setValue(Progress.getXp());
+	}
+
 	public static void updateScramble() {
 		String scramblechars = "";
 		Random r = new Random();
 		String res0 = "UFLDBR";
 		String res1 = "2'";
-		while (scramblechars.length() < 17) {
+		while (scramblechars.length() < 23) {
 			int cid = r.nextInt(6);
 			if (scramblechars.length() > 0) {
 				while (scramblechars.charAt(scramblechars.length() - 1) == res0
