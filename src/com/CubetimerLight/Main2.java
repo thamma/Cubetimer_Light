@@ -23,6 +23,7 @@ public class Main2 extends JFrame {
 			.getScreenSize().getWidth();
 	final int SCRHEIGHT = (int) java.awt.Toolkit.getDefaultToolkit()
 			.getScreenSize().getHeight();
+	public static String puzzle = "3x3";
 
 	private static List<Entry> entries;
 	private JPanel contentPane;
@@ -34,7 +35,7 @@ public class Main2 extends JFrame {
 	private static JProgressBar xp;
 	private static JLabel levelLabel;
 	private static JLabel xpLabel;
-	
+
 	private static Quest suggested;
 	private static Quest active;
 
@@ -289,11 +290,11 @@ public class Main2 extends JFrame {
 	}
 
 	private static void loadEntries() {
-		loadEntries("session.db");
+		loadEntries("/puzzle/" + puzzle + ".db");
 	}
 
 	private static void saveEntries() {
-		saveEntries("session.db");
+		saveEntries("/puzzle/" + puzzle + ".db");
 	}
 
 	private static void saveEntries(String sessionname) {
