@@ -49,17 +49,14 @@ public class Progress {
 	public static void levelUp() {
 		setXp(0);
 		setLevel(getLevel() + 1);
-		System.out.println("Levelup");
 	}
 
 	public static void addXp(int amount) {
 		int xp = getXp();
 		int lv = getLevel();
-		System.out.println("xp: " + xp + "  level: " + lv + " to be added: "
-				+ amount);
 		if (xp + amount >= xpAt(lv)) {
 			levelUp();
-			addXp((xp + amount)-xpAt(lv));
+			addXp((xp + amount) - xpAt(lv));
 		} else {
 			setXp(xp + amount);
 		}

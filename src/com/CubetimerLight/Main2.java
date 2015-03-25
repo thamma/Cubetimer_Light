@@ -6,10 +6,14 @@ import java.awt.Frame;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.TimerTask;
+
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -19,6 +23,10 @@ import javax.swing.SwingConstants;
 
 public class Main2 extends JFrame {
 
+	//
+
+	private static MediaPlayer nyan;
+
 	final int SCRWIDTH = (int) java.awt.Toolkit.getDefaultToolkit()
 			.getScreenSize().getWidth();
 	final int SCRHEIGHT = (int) java.awt.Toolkit.getDefaultToolkit()
@@ -26,11 +34,13 @@ public class Main2 extends JFrame {
 	public static String puzzle = "3x3";
 
 	private static List<Entry> entries;
-	private JPanel contentPane;
+	public static JPanel contentPane;
 	public static JLabel timeLabel;
 	public static JLabel scrambleLabel;
-	private static JLabel[] labels = new JLabel[4];
+	private static JLabel[] labels;
+	private static JLabel[] helpLabels;
 	static int downtime;
+	private static boolean help;
 
 	private static JProgressBar xp;
 	private static JLabel levelLabel;
@@ -39,13 +49,27 @@ public class Main2 extends JFrame {
 	private static Quest suggested;
 	private static Quest active;
 
+	private static int nyandown;
+
 	// [S] new Session
 	// [N] new Scramble
 	// [DEL] delete last entry?
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws URISyntaxException {
+		new javafx.embed.swing.JFXPanel();
+		String uriString = new File(
+				"C:/Users/Dominic/Documents/GitHub/Cubetimer_Light/src/com/CubetimerLight/nyan.mp3")
+				.toURI().toString();
+		String uriString2 = Main2.class.getResource("nyan.mp3")
+				.toURI().toString();
+		nyan = new MediaPlayer(new Media(uriString2));
+		help = false;
 		downtime = 0;
 		loadEntries();
+		labels = new JLabel[4];
+		helpLabels = new JLabel[4];
+		// H for help / Press and hold space to start
+		// N for new scramble
 		new Main2();
 	}
 
@@ -61,11 +85,24 @@ public class Main2 extends JFrame {
 		for (int i = 0; i < labels.length; i++) {
 			labels[i] = new JLabel("");
 			labels[i].setBounds(20, 30 * i + 20, 750, 20);
-			labels[i].setFocusable(false);
 			labels[i].setFont(new Font("Courier", Font.PLAIN, 18));
 			labels[i].setHorizontalAlignment(SwingConstants.LEFT);
 			labels[i].setVerticalAlignment(SwingConstants.TOP);
 			contentPane.add(labels[i]);
+		}
+		{
+			int w = 450;
+			int marg = 20;
+			int h = 17;
+			for (int i = 0; i < helpLabels.length; i++) {
+				helpLabels[i] = new JLabel("");
+				helpLabels[i].setBounds(SCRWIDTH - (w + marg), marg + i * h, w,
+						h);
+				helpLabels[i].setFont(new Font("Courier", Font.PLAIN, 14));
+				helpLabels[i].setHorizontalAlignment(SwingConstants.RIGHT);
+				helpLabels[i].setVerticalAlignment(SwingConstants.TOP);
+				contentPane.add(helpLabels[i]);
+			}
 		}
 		timeLabel = new JLabel(toTimestamp(0));
 		timeLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -104,10 +141,24 @@ public class Main2 extends JFrame {
 		updateStrings();
 		updateScramble();
 		updateXp();
+		updateHelp();
 		addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent arg0) {
+				if (arg0.getKeyCode() == KeyEvent.VK_C) {
+					nyandown++;
+					Random r = new Random();
+					contentPane.setBackground(new Color(r.nextInt(256), r
+							.nextInt(256), r.nextInt(256)));
+					updateHelp();
+					if (nyandown == 5)
+						nyan.play();
+				}
 				if (!Timer.started()) {
+					if (arg0.getKeyCode() == KeyEvent.VK_H) {
+						help = !help;
+						updateHelp();
+					}
 					if (arg0.getKeyCode() == KeyEvent.VK_SPACE) {
 						if (downtime < Constants.DOWNCAP) {// notready
 							timeLabel.setForeground(new Color(255, 25, 25));
@@ -132,6 +183,12 @@ public class Main2 extends JFrame {
 
 			@Override
 			public void keyReleased(KeyEvent arg0) {
+				if (arg0.getKeyCode() == KeyEvent.VK_C) {
+					if (nyandown >= 5) {
+						nyandown = 0;
+						nyan.stop();
+					}
+				}
 				if (arg0.getKeyCode() == KeyEvent.VK_SPACE) {
 					if (downtime < Constants.DOWNCAP) {// forget it
 						timeLabel.setForeground(new Color(0, 0, 0));
@@ -146,6 +203,30 @@ public class Main2 extends JFrame {
 				}
 			}
 		});
+	}
+
+	private static String getColor() {
+		return contentPane.getBackground().getRed() + ","
+				+ contentPane.getBackground().getBlue() + ","
+				+ contentPane.getBackground().getGreen();
+	}
+
+	private static void updateHelp() {
+		String[] tab = table(3, new String[][] {
+				new String[] { "[SPACE]", "hold and release to start" },
+				new String[] { "[N]", "generate new Scramble" },
+				new String[] { "[P]", "Switch Puzzle (wip)" },
+				new String[] { "[C]",
+						"to alternate Color (current: " + getColor() + ")" } });
+
+		if (help) {
+			for (int i = 0; i < helpLabels.length; i++)
+				helpLabels[i].setText(tab[i]);
+		} else {
+			for (int i = 0; i < helpLabels.length; i++)
+				helpLabels[i].setText("");
+			helpLabels[0].setText("[H]   for help");
+		}
 	}
 
 	private static int evalSolve(int time) {
@@ -203,7 +284,7 @@ public class Main2 extends JFrame {
 		Random r = new Random();
 		String res0 = "UFLDBR";
 		String res1 = "2'";
-		while (scramblechars.length() < 23) {
+		while (scramblechars.length() < Constants.SCRAMBLE_LENGTH) {
 			int cid = r.nextInt(6);
 			if (scramblechars.length() > 0) {
 				while (scramblechars.charAt(scramblechars.length() - 1) == res0
@@ -289,6 +370,47 @@ public class Main2 extends JFrame {
 		return (out);
 	}
 
+	public static String[] table(int min, String[]... lines) {
+		String[] out = new String[lines.length];
+		int[] max = getMaxLenghts(lines);
+		for (int j = 0; j < lines.length; j++) {
+			String[] s = lines[j];
+			for (int i = 0; i < s.length; i++) {
+				String t = s[i];
+				if (s[i].length() < max[i] + min) {
+					if (i != s.length)
+						s[i] += times(max[i] + min - s[i].length(), ' ');
+				}
+				if (out[j] == null) {
+					out[j] = "";
+				}
+				out[j] = out[j] + s[i];
+			}
+		}
+		return out;
+	}
+
+	public static int[] getMaxLenghts(String[][] in) {
+		int[] out = new int[in.length];
+		for (int i = 0; i < in.length; i++) {
+			for (int j = 0; j < in[i].length; j++) {
+				if (out[j] == 0 || in[i][j].length() > out[j])
+					out[j] = in[i][j].length();
+			}
+		}
+		return out;
+	}
+
+	public static void broadcast(String out, int time) {
+		// labelResponse.setText(out);
+		new java.util.Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				// labelResponse.setText("");
+			}
+		}, time);
+	}
+
 	private static void loadEntries() {
 		loadEntries("/puzzle/" + puzzle + ".db");
 	}
@@ -306,5 +428,18 @@ public class Main2 extends JFrame {
 		for (String s : FileUtils.loadFile(sessionname)) {
 			entries.add(new Entry(s));
 		}
+	}
+
+	public static String times(int n, char c) {
+		return times(n, "" + c);
+	}
+
+	public static String times(int n, String c) {
+		String out = "";
+		for (int i = 0; i < n; i++) {
+			out = out + c;
+			// out += c;
+		}
+		return out;
 	}
 }

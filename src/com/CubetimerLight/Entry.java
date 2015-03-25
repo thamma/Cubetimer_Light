@@ -63,7 +63,7 @@ public class Entry {
 	}
 
 	public String getCompact() {
-		return Main.times(12 - (this.getTimeStamp() + "").length(), ' ')
+		return Main2.times(12 - (this.getTimeStamp() + "").length(), ' ')
 				+ this.getTimeStamp() + "   " + this.getDateString() + "  "
 				+ this.getScramble();
 	}
@@ -82,7 +82,7 @@ public class Entry {
 	}
 
 	public String getTimeStamp() {
-		return Main.toTimestamp(getTime());
+		return Main2.toTimestamp(getTime());
 	}
 
 }
