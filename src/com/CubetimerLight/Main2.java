@@ -5,7 +5,6 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 
+@SuppressWarnings("serial")
 public class Main2 extends JFrame {
 
 	//
@@ -57,11 +57,9 @@ public class Main2 extends JFrame {
 
 	public static void main(String[] args) throws URISyntaxException {
 		new javafx.embed.swing.JFXPanel();
-		String uriString = new File(
-				"C:/Users/Dominic/Documents/GitHub/Cubetimer_Light/src/com/CubetimerLight/nyan.mp3")
-				.toURI().toString();
-		String uriString2 = Main2.class.getResource("nyan.mp3")
-				.toURI().toString();
+
+		String uriString2 = Main2.class.getResource("nyan.mp3").toURI()
+				.toString();
 		nyan = new MediaPlayer(new Media(uriString2));
 		help = false;
 		downtime = 0;
@@ -148,10 +146,14 @@ public class Main2 extends JFrame {
 				if (arg0.getKeyCode() == KeyEvent.VK_C) {
 					nyandown++;
 					Random r = new Random();
-					contentPane.setBackground(new Color(r.nextInt(256), r
-							.nextInt(256), r.nextInt(256)));
+					contentPane.setBackground(new Color(Constants.MINCOLOR
+							+ r.nextInt(256 - Constants.MINCOLOR),
+							Constants.MINCOLOR
+									+ r.nextInt(256 - Constants.MINCOLOR),
+							Constants.MINCOLOR
+									+ r.nextInt(256 - Constants.MINCOLOR)));
 					updateHelp();
-					if (nyandown == 5)
+					if (nyandown == Constants.NYANCAP)
 						nyan.play();
 				}
 				if (!Timer.started()) {
@@ -184,7 +186,7 @@ public class Main2 extends JFrame {
 			@Override
 			public void keyReleased(KeyEvent arg0) {
 				if (arg0.getKeyCode() == KeyEvent.VK_C) {
-					if (nyandown >= 5) {
+					if (nyandown >= Constants.NYANCAP) {
 						nyandown = 0;
 						nyan.stop();
 					}
@@ -280,38 +282,7 @@ public class Main2 extends JFrame {
 	}
 
 	public static void updateScramble() {
-		String scramblechars = "";
-		Random r = new Random();
-		String res0 = "UFLDBR";
-		String res1 = "2'";
-		while (scramblechars.length() < Constants.SCRAMBLE_LENGTH) {
-			int cid = r.nextInt(6);
-			if (scramblechars.length() > 0) {
-				while (scramblechars.charAt(scramblechars.length() - 1) == res0
-						.charAt(cid))
-					cid = r.nextInt(6);
-			}
-			if (scramblechars.length() > 1) {
-				while (scramblechars.charAt(scramblechars.length() - 1) == res0
-						.charAt(cid)
-						|| scramblechars.charAt(scramblechars.length() - 2) == res0
-								.charAt((cid + 3) % 6)
-						|| (scramblechars.charAt(scramblechars.length() - 2) == res0
-								.charAt(cid) && scramblechars
-								.charAt(scramblechars.length() - 1) == res0
-								.charAt((cid + 3) % 6))) {
-					cid = r.nextInt(6);
-				}
-			}
-			scramblechars += res0.charAt(cid);
-		}
-		String scramble = "";
-		for (int i = 0; i < scramblechars.length(); i++) {
-			char c = scramblechars.charAt(i);
-			int a = r.nextInt(4);
-			scramble += c + (a > 1 ? "" : "" + res1.charAt(a)) + " ";
-		}
-		scrambleLabel.setText(scramble);
+		scrambleLabel.setText(Scramble.Cube3x3(Constants.SCRAMBLE_LENGTH));
 	}
 
 	public static String[] tableToLines(int min, String[][] lines) {
@@ -352,11 +323,8 @@ public class Main2 extends JFrame {
 	public static String toTimestamp(int i) {
 		if (i == -1)
 			return "NaN";
-		int min = 0; // minutes
-		while (i >= 60000) {
-			i -= 60000; // i = i - 60000;
-			min++; // min = min+1;
-		}
+		int min = i/60000;
+		i -= min;
 		String sec = "" + (i / 1000) % 100;
 		if (min > 0)
 			while (sec.length() < 2)
@@ -365,7 +333,6 @@ public class Main2 extends JFrame {
 		while (millis.length() < 3)
 			millis = "0" + millis;
 		String out = ((min != 0) ? (min + ":") : ("")) + sec + "." + millis;
-		// <condition>?<true case>:<false case>
 
 		return (out);
 	}
@@ -376,10 +343,10 @@ public class Main2 extends JFrame {
 		for (int j = 0; j < lines.length; j++) {
 			String[] s = lines[j];
 			for (int i = 0; i < s.length; i++) {
-				String t = s[i];
 				if (s[i].length() < max[i] + min) {
-					if (i != s.length)
-						s[i] += times(max[i] + min - s[i].length(), ' ');
+					s[i] += times(max[i] + ((i != (s.length - 1)) ? min : 0)
+							- s[i].length(), ' ');
+					System.out.println(s[i]);
 				}
 				if (out[j] == null) {
 					out[j] = "";
