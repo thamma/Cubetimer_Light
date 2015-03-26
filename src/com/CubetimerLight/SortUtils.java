@@ -57,6 +57,18 @@ public class SortUtils {
 		return min;
 	}
 
+	public static int worst(List<Entry> entries) {
+		if (entries.size() == 0)
+			return -1;
+		int max = -1;
+		for (Entry e : entries) {
+			if (max == -1 || e.getTime() > max) {
+				max = e.getTime();
+			}
+		}
+		return max;
+	}
+
 	public static List<String> getEntryResources(List<Entry> entries) {
 		List<String> l = new ArrayList<String>();
 		for (Entry e : entries) {
@@ -74,7 +86,7 @@ public class SortUtils {
 		}
 		Collections.sort(temp);
 		int d = temp.size();
-		int median = temp.get(d/2 );
+		int median = temp.get(d / 2);
 		return median;
 	}
 
@@ -115,4 +127,21 @@ public class SortUtils {
 			sum += e.getTime();
 		return sum / entries.size();
 	}
+
+	private static int squaredMean(List<Entry> entries) {
+		if (entries.size() == 0)
+			return -1;
+		int sum = 0;
+		int m = mean(entries);
+		for (Entry e : entries) {
+			int t = e.getTime();
+			sum += (t - m) * (t - m);
+		}
+		return sum / entries.size();
+	}
+
+	public static int sdev(List<Entry> entries) {
+		return (int) (Math.sqrt(squaredMean(entries)));
+	}
+
 }

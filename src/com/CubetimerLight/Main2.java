@@ -82,7 +82,7 @@ public class Main2 extends JFrame {
 		contentPane.setBackground(new Color(190, 255, 130));
 		for (int i = 0; i < labels.length; i++) {
 			labels[i] = new JLabel("");
-			labels[i].setBounds(20, 30 * i + 20, 750, 20);
+			labels[i].setBounds(20, 30 * i + 20, 1000, 20);
 			labels[i].setFont(new Font("Courier", Font.PLAIN, 18));
 			labels[i].setHorizontalAlignment(SwingConstants.LEFT);
 			labels[i].setVerticalAlignment(SwingConstants.TOP);
@@ -245,30 +245,25 @@ public class Main2 extends JFrame {
 				3,
 				new String[][] {
 						new String[] { "Ao5",
-								toTimestamp(SortUtils.aoN(entries, 5)) },
+								toTimestamp(SortUtils.aoN(entries, 5)),
+								"  Best Ao5:",
+								toTimestamp(SortUtils.bestAoN(entries, 5)),
+								"  Mean:", toTimestamp(SortUtils.mean(entries)),
+								"  Best:",
+								toTimestamp(SortUtils.best(entries))},
 						new String[] { "Ao12",
-								toTimestamp(SortUtils.aoN(entries, 12)) },
+								toTimestamp(SortUtils.aoN(entries, 12)),
+								"  Best Ao12:",
+								toTimestamp(SortUtils.bestAoN(entries, 12)),
+								"  Median:",
+								toTimestamp(SortUtils.median(entries)), "  Worst:", toTimestamp(SortUtils.worst(entries))},
 						new String[] { "Ao100",
-								toTimestamp(SortUtils.aoN(entries, 100)) } });
-		String[] lines1 = tableToLines(
-				3,
-				new String[][] {
-						new String[] { "Best Ao5:",
-								toTimestamp(SortUtils.bestAoN(entries, 5)) },
-						new String[] { "Best Ao12:",
-								toTimestamp(SortUtils.bestAoN(entries, 12)) },
-						new String[] { "Best:",
-								toTimestamp(SortUtils.best(entries)) }
-
-				});
-		String[] lines2 = tableToLines(3, new String[][] {
-				new String[] { "Mean:", toTimestamp(SortUtils.mean(entries)) },
-				new String[] { "Median:",
-						toTimestamp(SortUtils.median(entries)) },
-				new String[] { "Solves:", "" + entries.size() } });
+								toTimestamp(SortUtils.aoN(entries, 100)),
+								"  Best Ao100:", toTimestamp(SortUtils.bestAoN(entries, 100)),
+								"  Deviation:",
+								toTimestamp(SortUtils.sdev(entries)), "  Solves:", "" + entries.size()} });
 		for (int i = 0; i < lines0.length; i++) {
-			labels[i]
-					.setText(lines0[i] + "   " + lines1[i] + "   " + lines2[i]);
+			labels[i].setText(lines0[i]);
 		}
 	}
 
@@ -323,7 +318,7 @@ public class Main2 extends JFrame {
 	public static String toTimestamp(int i) {
 		if (i == -1)
 			return "NaN";
-		int min = i/60000;
+		int min = i / 60000;
 		i -= min;
 		String sec = "" + (i / 1000) % 100;
 		if (min > 0)
