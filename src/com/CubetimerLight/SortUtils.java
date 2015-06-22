@@ -128,20 +128,20 @@ public class SortUtils {
 		return sum / entries.size();
 	}
 
-	private static int squaredMean(List<Entry> entries) {
+	private static int devhelp(List<Entry> entries) {
 		if (entries.size() == 0)
 			return -1;
-		int sum = 0;
+		long sum = 0;//needs to be long
 		int m = mean(entries);
 		for (Entry e : entries) {
 			int t = e.getTime();
 			sum += (t - m) * (t - m);
 		}
-		return sum / entries.size();
+		return (int) (sum / entries.size());
 	}
 
 	public static int sdev(List<Entry> entries) {
-		return (int) (Math.sqrt(squaredMean(entries)));
+		return (int) (Math.sqrt(devhelp(entries)));
 	}
 
 }
