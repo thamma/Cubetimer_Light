@@ -1,0 +1,19 @@
+.button:hover {
+	-fx-background-color: #3a3a3a;
+}
+
+.button {
+	-fx-background-color: white;
+	-fx-text-fill: #ff0000;
+}
+
+.button:pressed {
+	-fx-background-color: #0000ff;
+}
+
+.menu-item, .menu:hover, .menu:select {
+	-fx-background-color: linear-gradient(from 25% 25% to 100% 100%, #90EE90, #B0C4DE);
+}
+.menu-bar {
+	-fx-use-system-menu-bar: true;
+}
