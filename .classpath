@@ -6,6 +6,6 @@
 			<accessrule kind="accessible" pattern="javafx/**"/>
 		</accessrules>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/GuiUtils"/>
+	<classpathentry kind="lib" path="C:/Users/Dominic/Documents/Workspace/GuiUtils/target/guiutils-1.0-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

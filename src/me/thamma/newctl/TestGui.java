@@ -1,14 +1,12 @@
 package me.thamma.newctl;
 
-import com.thamma.guiutils.menubuilder.MenuBuilder;
-import com.thamma.guiutils.menubuilder.MenuItemType;
-
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import me.thamma.guiutils.menubuilder.MenuBuilder;
+import me.thamma.guiutils.menubuilder.MenuItemType;
 
 public class TestGui extends Application {
 
@@ -33,13 +31,13 @@ public class TestGui extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		
+
 		stage.setWidth(500);
 		stage.setHeight(500);
 		// stage.getIcons().add(new
 		// Image(this.getClass().getResourceAsStream("resources/DITTO.png")));
 		Pane pane = new Pane();
-		
+
 		Scene scene = new Scene(pane);
 		pane.getChildren().add(m.getMenu());
 
